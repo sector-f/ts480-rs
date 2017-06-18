@@ -1,3 +1,6 @@
+extern crate ascii;
+use ascii::{AsciiString, AsciiStr, ToAsciiChar};
+
 extern crate serial;
 use serial::{SystemPort, SerialPort};
 
@@ -45,7 +48,14 @@ impl TS480 {
     ///
     /// p1: 0 = ANT1; 1 = ANT2
     pub fn set_antenna(&mut self, p1: u8) -> RadioResult<()> {
-        Ok(self.transmit(&format!("AN{}", p1))?)
+        Ok(self.transmit(&format!("AN{};", p1))?)
+    }
+
+    pub fn read_antenna(&mut self) -> RadioResult<u8> {
+        self.transmit("AN;")?;
+        let data = self.receive()?;
+
+        Ok(Ok(5))
     }
 
     /// Moves down the frequency band
@@ -60,12 +70,20 @@ impl TS480 {
 
     /// Attempts to receive data from the radio. Currently, this
     /// blocks indefinitely until the serial port's CTS pin goes true.
-    pub fn receive(&mut self) -> RadioResult<Vec<u8>> {
+    pub fn receive(&mut self) -> RadioResult<AsciiString> {
         let mut buf = Vec::new();
         self.port.set_rts(false)?;
         // while ! self.port.read_cts()? {}
         self.port.read_to_end(&mut buf)?;
-        Ok(Ok(buf.to_owned()))
+
+        let mut ascii = AsciiString::new();
+        for num in buf {
+            if let Ok(ascii_char) = num.to_ascii_char() {
+                ascii.push(ascii_char);
+            }
+        }
+
+        Ok(Ok(ascii))
     }
 
     pub fn transmit(&mut self, data: &str) -> RadioResult<()> {
