@@ -2,7 +2,11 @@ extern crate ascii;
 use ascii::{AsciiString, ToAsciiChar};
 
 extern crate serial;
-use serial::{SystemPort, SerialPort};
+use serial::{
+    SystemPort, SerialPort, PortSettings,
+    BaudRate, CharSize, Parity,
+    StopBits, FlowControl
+};
 
 use std::io::{Read, Write};
 use std::ffi::{OsStr, OsString};
@@ -16,10 +20,24 @@ pub struct TS480 {
 
 impl TS480 {
     /// Attempts to connect to the radio using the specified port.
-    /// On *nix systems, this should be a device file, such as `/dev/ttyS0`.
-    /// On Windows, this should be a COM port, such as `COM1`
+    /// On *nix systems, this should be the path to a
+    /// device file, such as `/dev/ttyS0`.
+    ///
+    /// On Windows, this should be the name of a
+    /// COM port, such as `COM1`
     pub fn new<T: AsRef<OsStr> + ?Sized>(port: &T) -> serial::Result<Self> {
-        let serial_port = serial::open(port)?;
+        let mut serial_port = serial::open(port)?;
+
+        let settings = PortSettings {
+            baud_rate: BaudRate::Baud4800,
+            char_size: CharSize::Bits8,
+            parity: Parity::ParityNone,
+            stop_bits: StopBits::Stop2,
+            flow_control: FlowControl::FlowHardware,
+        };
+
+        let _ = serial_port.configure(&settings);
+
         Ok(TS480 {
             port: serial_port,
             port_name: OsString::from(port),
