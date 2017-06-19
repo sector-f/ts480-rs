@@ -1,5 +1,5 @@
 extern crate ascii;
-use ascii::{AsciiString, AsciiStr, ToAsciiChar};
+use ascii::{AsciiString, ToAsciiChar};
 
 extern crate serial;
 use serial::{SystemPort, SerialPort};
@@ -51,12 +51,10 @@ impl TS480 {
         Ok(self.transmit(&format!("AN{};", p1))?)
     }
 
-    pub fn read_antenna(&mut self) -> RadioResult<u8> {
-        self.transmit("AN;")?;
-        let data = self.receive()?;
-
-        Ok(Ok(5))
-    }
+    // pub fn read_antenna(&mut self) -> RadioResult<u8> {
+    //     let _ = self.transmit("AN;")?;
+    //     let data = self.receive()?;
+    // }
 
     /// Moves down the frequency band
     pub fn frequency_down(&mut self) -> RadioResult<()> {
