@@ -11,7 +11,7 @@ use serial::{
 use std::io::{Read, Write};
 use std::ffi::{OsStr, OsString};
 
-pub type RadioResult<T> = serial::Result<Result<T, RadioError>>;
+pub type RadioResult<T> = serial::Result<T>;
 
 pub struct TS480 {
     port: SystemPort,
@@ -57,7 +57,7 @@ impl TS480 {
     // /// p2: 0 = TX-AT THRU; 1 = TX-AT IN
     // ///
     // /// p3: 0 = Stop tuning; 1 = Start tuning
-    // pub fn set_tuner_status(&mut self, p1: u8, p2: u8, p3: u8) -> RadioResult<()> {
+    // pub fn set_tuner_status(&mut self, p1: u8, p2: u8, p3: u8) -> serial::Result<()> {
     //     self.transmit(&format!("AC{}{}{};", p1, p2, p3))?;
     //     Ok(Ok(()))
     // }
@@ -65,28 +65,28 @@ impl TS480 {
     /// Selects the antenna connector ANT1/ANT2
     ///
     /// p1: 0 = ANT1; 1 = ANT2
-    pub fn set_antenna(&mut self, p1: u8) -> RadioResult<()> {
+    pub fn set_antenna(&mut self, p1: u8) -> serial::Result<()> {
         Ok(self.transmit(&format!("AN{};", p1))?)
     }
 
-    // pub fn read_antenna(&mut self) -> RadioResult<u8> {
+    // pub fn read_antenna(&mut self) -> serial::Result<u8> {
     //     let _ = self.transmit("AN;")?;
     //     let data = self.receive()?;
     // }
 
     /// Moves down the frequency band
-    pub fn frequency_down(&mut self) -> RadioResult<()> {
+    pub fn frequency_down(&mut self) -> serial::Result<()> {
         self.transmit("BD;")
     }
 
     /// Moves up the frequency band
-    pub fn frequency_up(&mut self) -> RadioResult<()> {
+    pub fn frequency_up(&mut self) -> serial::Result<()> {
         self.transmit("BU;")
     }
 
     /// Attempts to receive data from the radio. Currently, this
     /// blocks indefinitely until the serial port's CTS pin goes true.
-    pub fn receive(&mut self) -> RadioResult<AsciiString> {
+    pub fn receive(&mut self) -> serial::Result<AsciiString> {
         let mut buf = Vec::new();
         self.port.set_rts(false)?;
         // while ! self.port.read_cts()? {}
@@ -99,24 +99,24 @@ impl TS480 {
             }
         }
 
-        Ok(Ok(ascii))
+        Ok(ascii)
     }
 
-    pub fn transmit(&mut self, data: &str) -> RadioResult<()> {
+    pub fn transmit(&mut self, data: &str) -> serial::Result<()> {
         self.port.set_rts(true)?;
         self.port.write(data.as_bytes())?;
-        Ok(Ok(()))
+        Ok(())
     }
 
-    #[allow(dead_code)]
-    fn check_for_error(e: &str) -> Option<RadioError> {
-        match e {
-            "?;" => Some(RadioError::SyntaxOrStatus),
-            "E;" => Some(RadioError::CommError),
-            "O;" => Some(RadioError::ProcIncomplete),
-            _ => None,
-        }
-    }
+    // #[allow(dead_code)]
+    // fn check_for_error(e: &str) -> Option<RadioError> {
+    //     match e {
+    //         "?;" => Some(RadioError::SyntaxOrStatus),
+    //         "E;" => Some(RadioError::CommError),
+    //         "O;" => Some(RadioError::ProcIncomplete),
+    //         _ => None,
+    //     }
+    // }
 }
 
 impl Drop for TS480 {
@@ -127,21 +127,21 @@ impl Drop for TS480 {
     }
 }
 
-pub enum RadioError {
-    /// `?;` response from the radio.
-    ///
-    /// Indicates either the command syntax was incorrect or
-    /// the command was not executed due to the tranceiver's current status
-    SyntaxOrStatus,
+//pub enum RadioError {
+//    /// `?;` response from the radio.
+//    ///
+//    /// Indicates either the command syntax was incorrect or
+//    /// the command was not executed due to the tranceiver's current status
+//    SyntaxOrStatus,
 
-    /// `E;` response from the radio.
-    ///
-    /// Indicates a communcation error.
-    CommError,
+//    /// `E;` response from the radio.
+//    ///
+//    /// Indicates a communcation error.
+//    CommError,
 
-    /// `O;` response from the radio.
-    ///
-    /// Indicates receive data was sent but
-    /// processing was not completed.
-    ProcIncomplete,
-}
+//    /// `O;` response from the radio.
+//    ///
+//    /// Indicates receive data was sent but
+//    /// processing was not completed.
+//    ProcIncomplete,
+//}
